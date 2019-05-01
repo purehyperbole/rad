@@ -2,7 +2,6 @@ package rad
 
 import (
 	"fmt"
-	"strings"
 )
 
 // Radix tree
@@ -77,34 +76,6 @@ func (r *Radix) Lookup(key []byte) interface{} {
 	return n.value
 }
 
-// Graphviz returns a graphviz formatted string of all the nodes in the tree
-// this should only be run on trees with relatively few nodes
-func (r *Radix) Graphviz() string {
-	var gvzc int
-
-	gvoutput := []string{"digraph G {"}
-
-	r.graphviz(&gvoutput, &gvzc, "[-1] ROOT", r.root)
-
-	gvoutput = append(gvoutput, "}")
-
-	return fmt.Sprint(strings.Join(gvoutput, "\n"))
-}
-
-func (r *Radix) graphviz(gvoutput *[]string, gvzc *int, previous string, n *Node) {
-	for i, next := range n.edges {
-		if next != nil {
-			(*gvzc)++
-
-			n = next
-
-			(*gvoutput) = append((*gvoutput), fmt.Sprintf("  \"%s\" -> \"[%d] %s\" [label=\"%s\"]", previous, *gvzc, string(n.prefix), string(byte(i))))
-
-			r.graphviz(gvoutput, gvzc, fmt.Sprintf("[%d] %s", *gvzc, string(n.prefix)), n)
-		}
-	}
-}
-
 func (r *Radix) findInsertionPoint(key []byte) (*Node, *Node, int, int) {
 	var pos, dv int
 	var node, parent *Node
@@ -161,6 +132,11 @@ func (r *Radix) splitNode(key []byte, value interface{}, parent, node *Node, pos
 	parent.print()
 	if node != nil {
 		node.print()
+	} else {
+		fmt.Println("NODE IS NIL!")
+		fmt.Println(string(key))
+		fmt.Println(pos)
+		fmt.Println(dv)
 	}
 
 	fmt.Println("create node", string(key[pos]), "->", string(key[pos+1:pos+dv]))
