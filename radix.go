@@ -12,7 +12,9 @@ type Radix struct {
 // New Radix Tree
 func New() *Radix {
 	return &Radix{
-		root: &Node{},
+		root: &Node{
+			edges: &[256]*Node{},
+		},
 	}
 }
 
@@ -21,22 +23,20 @@ func (r *Radix) Insert(key []byte, value interface{}) {
 	parent, node, pos, dv := r.findInsertionPoint(key)
 
 	switch {
-
-	/*
-		case len(node.prefix) > 0 && len(node.prefix) > dv:
-			r.splitNode(key, parent, node, pos, dv)
-		case pos == len(key):
-			r.updateNode(key, parent, node, pos, dv)
-		case n.HasPrefix() && dv == n.PrefixSize() || i < len(key):
-			r.insertNode(key, parent, node, pos, db)
-	*/
-
 	case pos == len(key):
 		r.updateNode(key, value, parent, node, pos, dv)
-	case pos < len(key) && dv == 0:
+	case pos < len(key) && node == nil:
 		r.insertNode(key, value, parent, node, pos, dv)
+
+	case (len(key) - (pos + dv)) > 0:
+		fmt.Println("DEBUG")
+		fmt.Println(len(node.prefix))
+		fmt.Println(dv)
+		fmt.Println(pos)
+
+		r.splitThreeWay(key, value, parent, node, pos, dv)
 	default:
-		r.splitNode(key, value, parent, node, pos, dv)
+		r.splitTwoWay(key, value, parent, node, pos, dv)
 	}
 }
 
@@ -108,11 +108,12 @@ func (r *Radix) findInsertionPoint(key []byte) (*Node, *Node, int, int) {
 }
 
 func (r *Radix) insertNode(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	fmt.Println("insert")
+	fmt.Println("insert", string(key))
 
 	parent.setNext(key[pos], &Node{
 		prefix: key[pos+1:],
 		value:  value,
+		edges:  &[256]*Node{},
 	})
 }
 
@@ -126,28 +127,77 @@ func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, po
 	})
 }
 
-func (r *Radix) splitNode(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	fmt.Println("split")
+func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, pos, dv int) {
+	fmt.Println("split two way", string(key))
+
+	fmt.Println("KEY:", string(key))
+	fmt.Println(pos)
+	fmt.Println(dv)
 
 	parent.print()
 	if node != nil {
 		node.print()
 	} else {
 		fmt.Println("NODE IS NIL!")
-		fmt.Println(string(key))
-		fmt.Println(pos)
-		fmt.Println(dv)
 	}
 
 	fmt.Println("create node", string(key[pos]), "->", string(key[pos+1:pos+dv]))
 	fmt.Println("create node", string(node.prefix[dv]), "->", string(node.prefix[dv+1:]))
 
+	n1 := &Node{
+		prefix: key[pos+1 : pos+dv],
+		value:  value,
+		edges:  &[256]*Node{},
+	}
+
+	n2 := &Node{
+		prefix: node.prefix[dv+1:],
+		value:  node.value,
+		edges:  node.edges,
+	}
+
+	n1.setNext(node.prefix[dv], n2)
+
+	parent.setNext(key[pos], n1)
+}
+
+func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node, pos, dv int) {
+	fmt.Println("split three way", string(key))
+
 	/*
-		n1 := &Node{
-			prefix:
+		fmt.Println("KEY:", string(key))
+		fmt.Println(pos)
+		fmt.Println(dv)
+
+		fmt.Println(string(key[pos]))
+
+		parent.print()
+		if node != nil {
+			node.print()
+		} else {
+			fmt.Println("NODE IS NIL!")
 		}
 	*/
 
-	fmt.Println(pos)
-	fmt.Println(dv)
+	n1 := &Node{
+		// prefix: key[pos:dv],
+		edges: &[256]*Node{},
+	}
+
+	n2 := &Node{
+		prefix: node.prefix[dv+pos:],
+		value:  node.value,
+		edges:  node.edges,
+	}
+
+	n3 := &Node{
+		prefix: key[pos+1:],
+		value:  value,
+		edges:  &[256]*Node{},
+	}
+
+	n1.setNext(node.prefix[dv], n2)
+	n1.setNext(key[pos], n3)
+
+	parent.setNext(key[pos-1], n1)
 }

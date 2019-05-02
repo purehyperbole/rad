@@ -7,7 +7,7 @@ import (
 
 // Node stores all leaf data
 type Node struct {
-	edges  [256]*Node
+	edges  *[256]*Node
 	prefix []byte
 	value  interface{}
 }
