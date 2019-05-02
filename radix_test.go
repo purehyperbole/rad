@@ -1,7 +1,6 @@
 package rad
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -75,10 +74,6 @@ func TestRadixInsertLookup(t *testing.T) {
 
 			for _, kv := range tc.Lookups {
 				value := r.Lookup([]byte(kv.Key))
-				if value == nil {
-					fmt.Println(Graphviz(r))
-					fmt.Println("expecting", kv.Value, "from", kv.Key)
-				}
 				require.NotNil(t, value)
 				assert.Equal(t, kv.Value, value)
 			}
