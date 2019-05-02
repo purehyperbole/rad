@@ -1,5 +1,7 @@
 package rad
 
+import "fmt"
+
 // Radix tree
 type Radix struct {
 	root *Node
@@ -19,7 +21,7 @@ func (r *Radix) Insert(key []byte, value interface{}) {
 	parent, node, pos, dv := r.findInsertionPoint(key)
 
 	switch {
-	case pos == len(key):
+	case pos == len(key) && node == nil:
 		r.updateNode(key, value, parent, node, pos, dv)
 	case pos < len(key) && node == nil:
 		r.insertNode(key, value, parent, node, pos, dv)
@@ -108,7 +110,7 @@ func (r *Radix) insertNode(key []byte, value interface{}, parent, node *Node, po
 }
 
 func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	//fmt.Println("update")
+	fmt.Println("update", string(key))
 
 	parent.setNext(key[pos], &Node{
 		prefix: key[pos+1:],
@@ -118,10 +120,19 @@ func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, po
 }
 
 func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	// fmt.Println("split two way", string(key))
+	//fmt.Println("split two way", string(key))
+
+	var pfx []byte
+
+	// fix issue where key is found, but is occupied by another node with prefix
+	if len(key) > pos+1 {
+		pfx = key[pos+1 : pos+dv]
+	} else {
+		pos--
+	}
 
 	n1 := &Node{
-		prefix: key[pos+1 : pos+dv],
+		prefix: pfx,
 		value:  value,
 		edges:  &[256]*Node{},
 	}
@@ -138,7 +149,7 @@ func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, p
 }
 
 func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	// fmt.Println("split three way", string(key))
+	//fmt.Println("split three way", string(key))
 
 	n1 := &Node{
 		prefix: node.prefix[:dv],
