@@ -21,7 +21,7 @@ func (r *Radix) Insert(key []byte, value interface{}) {
 	switch {
 	case pos < len(key) && node == nil:
 		r.insertNode(key, value, parent, node, pos, dv)
-	case pos == len(key) && len(key) == pos+dv:
+	case pos == len(key) && len(key) == pos+len(node.prefix):
 		r.updateNode(key, value, parent, node, pos, dv)
 	case (len(key) - (pos + dv)) > 0:
 		r.splitThreeWay(key, value, parent, node, pos, dv)
@@ -94,8 +94,6 @@ func (r *Radix) findInsertionPoint(key []byte) (*Node, *Node, int, int) {
 }
 
 func (r *Radix) insertNode(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	//fmt.Println("insert", string(key))
-
 	parent.setNext(key[pos], &Node{
 		prefix: key[pos+1:],
 		value:  value,
@@ -104,8 +102,6 @@ func (r *Radix) insertNode(key []byte, value interface{}, parent, node *Node, po
 }
 
 func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	// fmt.Println("update", string(key))
-
 	parent.setNext(key[pos-1], &Node{
 		prefix: node.prefix,
 		value:  value,
@@ -114,13 +110,11 @@ func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, po
 }
 
 func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	//fmt.Println("split two way", string(key))
-
 	var pfx []byte
 
 	// fix issue where key is found, but is occupied by another node with prefix
-	if len(key) > pos+1 {
-		pfx = key[pos+1 : pos+dv]
+	if len(key) > pos {
+		pfx = key[pos : pos+dv]
 	} else {
 		pos--
 	}
@@ -138,13 +132,10 @@ func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, p
 	}
 
 	n1.setNext(node.prefix[dv], n2)
-
 	parent.setNext(key[pos], n1)
 }
 
 func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	//fmt.Println("split three way", string(key))
-
 	n1 := &Node{
 		prefix: node.prefix[:dv],
 		edges:  &[256]*Node{},
@@ -164,6 +155,5 @@ func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node,
 
 	n1.setNext(node.prefix[dv], n2)
 	n1.setNext(key[pos+dv], n3)
-
 	parent.setNext(key[pos-1], n1)
 }
