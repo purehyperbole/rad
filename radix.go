@@ -1,7 +1,5 @@
 package rad
 
-import "fmt"
-
 // Radix tree
 type Radix struct {
 	root *Node
@@ -21,13 +19,13 @@ func (r *Radix) Insert(key []byte, value interface{}) {
 	parent, node, pos, dv := r.findInsertionPoint(key)
 
 	switch {
-	case pos == len(key) && node == nil:
-		r.updateNode(key, value, parent, node, pos, dv)
 	case pos < len(key) && node == nil:
 		r.insertNode(key, value, parent, node, pos, dv)
+	case pos == len(key) && len(key) == pos+dv:
+		r.updateNode(key, value, parent, node, pos, dv)
 	case (len(key) - (pos + dv)) > 0:
 		r.splitThreeWay(key, value, parent, node, pos, dv)
-	default:
+	case (len(key) - (pos + dv)) == 0:
 		r.splitTwoWay(key, value, parent, node, pos, dv)
 	}
 }
@@ -40,9 +38,6 @@ func (r *Radix) Lookup(key []byte) interface{} {
 
 	for n.next(key[i]) != nil {
 		n = n.next(key[i])
-		if n == nil {
-			break
-		}
 		i++
 
 		if len(n.prefix) > 0 {
@@ -76,7 +71,6 @@ func (r *Radix) findInsertionPoint(key []byte) (*Node, *Node, int, int) {
 
 	for node.next(key[pos]) != nil {
 		parent = node
-
 		node = node.next(key[pos])
 		pos++
 
@@ -110,10 +104,10 @@ func (r *Radix) insertNode(key []byte, value interface{}, parent, node *Node, po
 }
 
 func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	fmt.Println("update", string(key))
+	// fmt.Println("update", string(key))
 
-	parent.setNext(key[pos], &Node{
-		prefix: key[pos+1:],
+	parent.setNext(key[pos-1], &Node{
+		prefix: node.prefix,
 		value:  value,
 		edges:  node.edges,
 	})
