@@ -1,5 +1,10 @@
 package rad
 
+import (
+	"fmt"
+	"os"
+)
+
 // Radix tree
 type Radix struct {
 	root *Node
@@ -18,10 +23,22 @@ func New() *Radix {
 func (r *Radix) Insert(key []byte, value interface{}) bool {
 	parent, node, pos, dv := r.findInsertionPoint(key)
 
+	defer func() {
+		if x := recover(); x != nil {
+			fmt.Println("Recovered in f", x)
+
+			parent.print()
+			node.print()
+			fmt.Println(pos)
+			fmt.Println(dv)
+			os.Exit(1)
+		}
+	}()
+
 	switch {
 	case pos < len(key) && node == nil:
 		return r.insertNode(key, value, parent, node, pos, dv)
-	case pos == len(key) && len(key) == pos+len(node.prefix):
+	case pos == len(key)+dv && len(node.prefix) == 0, pos == len(key)+dv && len(node.prefix) > 1:
 		return r.updateNode(key, value, parent, node, pos, dv)
 	case (len(key) - (pos + dv)) > 0:
 		return r.splitThreeWay(key, value, parent, node, pos, dv)
@@ -35,6 +52,7 @@ func (r *Radix) Insert(key []byte, value interface{}) bool {
 // MustInsert attempts to insert a value until it is successful
 func (r *Radix) MustInsert(key []byte, value interface{}) {
 	for !r.Insert(key, value) {
+		fmt.Println("retrying: ", string(key))
 	}
 }
 
@@ -94,7 +112,7 @@ func (r *Radix) findInsertionPoint(key []byte) (*Node, *Node, int, int) {
 
 		// if we've found the key, return its parent node so it can be pointed to the new node
 		if pos == len(key) {
-			return parent, node, pos, dv
+			return parent, node, pos, 0
 		}
 	}
 
@@ -110,7 +128,13 @@ func (r *Radix) insertNode(key []byte, value interface{}, parent, node *Node, po
 }
 
 func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, pos, dv int) bool {
-	return parent.swapNext(key[pos-1], node, &Node{
+	edgePos := pos - (len(node.prefix) + 1)
+
+	fmt.Println(len(key))
+	fmt.Println(edgePos)
+	fmt.Println(string(node.prefix))
+
+	return parent.swapNext(key[edgePos], node, &Node{
 		prefix: node.prefix,
 		value:  value,
 		edges:  node.edges,
