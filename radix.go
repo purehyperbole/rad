@@ -15,18 +15,26 @@ func New() *Radix {
 }
 
 // Insert or update a keypair
-func (r *Radix) Insert(key []byte, value interface{}) {
+func (r *Radix) Insert(key []byte, value interface{}) bool {
 	parent, node, pos, dv := r.findInsertionPoint(key)
 
 	switch {
 	case pos < len(key) && node == nil:
-		r.insertNode(key, value, parent, node, pos, dv)
+		return r.insertNode(key, value, parent, node, pos, dv)
 	case pos == len(key) && len(key) == pos+len(node.prefix):
-		r.updateNode(key, value, parent, node, pos, dv)
+		return r.updateNode(key, value, parent, node, pos, dv)
 	case (len(key) - (pos + dv)) > 0:
-		r.splitThreeWay(key, value, parent, node, pos, dv)
+		return r.splitThreeWay(key, value, parent, node, pos, dv)
 	case (len(key) - (pos + dv)) == 0:
-		r.splitTwoWay(key, value, parent, node, pos, dv)
+		return r.splitTwoWay(key, value, parent, node, pos, dv)
+	}
+
+	return false
+}
+
+// MustInsert attempts to insert a value until it is successful
+func (r *Radix) MustInsert(key []byte, value interface{}) {
+	for !r.Insert(key, value) {
 	}
 }
 
@@ -93,23 +101,23 @@ func (r *Radix) findInsertionPoint(key []byte) (*Node, *Node, int, int) {
 	return node, nil, pos, dv
 }
 
-func (r *Radix) insertNode(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	parent.setNext(key[pos], &Node{
+func (r *Radix) insertNode(key []byte, value interface{}, parent, node *Node, pos, dv int) bool {
+	return parent.swapNext(key[pos], nil, &Node{
 		prefix: key[pos+1:],
 		value:  value,
 		edges:  &[256]*Node{},
 	})
 }
 
-func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, pos, dv int) {
-	parent.setNext(key[pos-1], &Node{
+func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, pos, dv int) bool {
+	return parent.swapNext(key[pos-1], node, &Node{
 		prefix: node.prefix,
 		value:  value,
 		edges:  node.edges,
 	})
 }
 
-func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, pos, dv int) {
+func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, pos, dv int) bool {
 	var pfx []byte
 
 	// fix issue where key is found, but is occupied by another node with prefix
@@ -132,10 +140,11 @@ func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, p
 	}
 
 	n1.setNext(node.prefix[dv], n2)
-	parent.setNext(key[pos], n1)
+
+	return parent.swapNext(key[pos], node, n1)
 }
 
-func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node, pos, dv int) {
+func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node, pos, dv int) bool {
 	n1 := &Node{
 		prefix: node.prefix[:dv],
 		edges:  &[256]*Node{},
@@ -155,5 +164,6 @@ func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node,
 
 	n1.setNext(node.prefix[dv], n2)
 	n1.setNext(key[pos+dv], n3)
-	parent.setNext(key[pos-1], n1)
+
+	return parent.swapNext(key[pos-1], node, n1)
 }

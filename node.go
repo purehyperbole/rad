@@ -3,6 +3,8 @@ package rad
 import (
 	"fmt"
 	"strings"
+	"sync/atomic"
+	"unsafe"
 )
 
 // Node stores all leaf data
@@ -18,6 +20,13 @@ func (n *Node) next(b byte) *Node {
 
 func (n *Node) setNext(b byte, node *Node) {
 	n.edges[int(b)] = node
+}
+
+func (n *Node) swapNext(b byte, existing, next *Node) bool {
+	oPtr := (*unsafe.Pointer)(unsafe.Pointer(&n.edges[b]))
+	old := unsafe.Pointer(existing)
+	new := unsafe.Pointer(next)
+	return atomic.CompareAndSwapPointer(oPtr, old, new)
 }
 
 func (n *Node) print() {
