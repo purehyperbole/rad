@@ -1,6 +1,7 @@
 package rad
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,6 +79,58 @@ func TestRadixInsertLookup(t *testing.T) {
 				assert.Equal(t, kv.Value, value)
 			}
 		})
+	}
+}
+
+func TestIterate(t *testing.T) {
+	keys := []string{
+		"hypotensive",
+		"hyposulfurous",
+		"hypotensor",
+		"hypotension",
+		"hypotaxia",
+		"hypotaxic",
+		"hyposulfite",
+		"hyposuprarenalism",
+		"hyposulphurous",
+		"hyposulphuric",
+		"hypostomatic",
+		"hyposulphate",
+		"hypostomial",
+		"hypotenuses",
+		"hypostome",
+		"hypostoma",
+		"hypotensions",
+		"hypotarsal",
+		"hypostomatous",
+		"hypotaxis",
+		"hypostrophe",
+		"hyposulphite",
+		"hypostomous",
+		"hypotarsus",
+		"hypostyptic",
+		"hypotactic",
+		"hypostypsis",
+		"hypotenusal",
+		"hypotenuse",
+	}
+
+	r := New()
+
+	var results [][]byte
+
+	for _, k := range keys {
+		r.Insert([]byte(k), []byte(k))
+	}
+
+	r.Iterate([]byte("hypot"), func(key []byte, value interface{}) {
+		results = append(results, key)
+	})
+
+	assert.Len(t, results, 13)
+
+	for i := range results {
+		assert.True(t, bytes.HasPrefix(results[i], []byte("hypot")))
 	}
 }
 
