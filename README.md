@@ -1,4 +1,4 @@
-# rad [![GoDoc](https://godoc.org/github.com/purehyperbole/rad?status.svg)](https://godoc.org/github.com/purehyperbole/rad) [![Go Report Card](https://goreportcard.com/badge/github.com/purehyperbole/rad)](https://goreportcard.com/report/github.com/purehyperbole/rad) [![Build Status](https://travis-ci.org/purehyperbole/rad.svg?branch=master)](https://travis-ci.org/purehyperbole/rad)
+# Rad [![GoDoc](https://godoc.org/github.com/purehyperbole/rad?status.svg)](https://godoc.org/github.com/purehyperbole/rad) [![Go Report Card](https://goreportcard.com/badge/github.com/purehyperbole/rad)](https://goreportcard.com/report/github.com/purehyperbole/rad) [![Build Status](https://travis-ci.org/purehyperbole/rad.svg?branch=master)](https://travis-ci.org/purehyperbole/rad)
 
 A concurrent lock free radix tree implementation for go.
 
@@ -27,26 +27,41 @@ func main() {
 }
 ```
 
-`Get` allows data to be retrieved.
+`Lookup` can be used to retrieve a stored value
 
 ```go
-data, err := db.Get([]byte("myKey1234"))
+value := r.Lookup([]byte("myKey1234"))
 ```
 
-`Set` allows data to be stored.
+`Insert` allows a value to be stored for a given key.
+
+A successful insert will return true.
+
+If the operation conflicts with an insert from another thread, it will return false.
 
 ```go
-err := db.Set([]byte("myKey1234"), []byte(`{"status": "ok"}`))
+if r.Insert([]byte("key"), &Thing{12345}) {
+    fmt.Println("success!")
+} else {
+    fmt.Println("insert failed")
+}
+```
+
+`MustInsert` can be used if you want to retry the insertion until it is successful.
+```go
+r.MustInsert([]byte("key"), &Thing{12345})
 ```
 
 # Features/Wishlist
 
-- [x] Persistence
-- [x] Compressed tree nodes (radix)
-- [x] Sync mmap data on resize
-- [ ] Configurable sync on write options
-- [ ] Transactions (MVCC)
-- [ ] Data file compaction
+- [x] Lock free Insert using CAS (compare & swap)
+- [x] Lookup
+- [x] Basic key iterator
+- [ ] Delete
+
+## Why?
+
+This project was created to learn about lock free data structures. As such, it probably should not be used for any real work. Use at your own risk!
 
 ## Versioning
 
