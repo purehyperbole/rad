@@ -83,7 +83,6 @@ func (r *Radix) insertNode(key []byte, value interface{}, parent, node *Node, po
 	return parent.swapNext(key[pos], nil, &Node{
 		prefix: key[pos+1:],
 		value:  value,
-		edges:  &[256]*Node{},
 	})
 }
 
@@ -108,13 +107,11 @@ func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, p
 	n1 := &Node{
 		prefix: pfx,
 		value:  value,
-		edges:  &[256]*Node{},
 	}
 
 	n2 := &Node{
 		prefix: node.prefix[dv+1:],
 		value:  node.value,
-		edges:  node.edges,
 	}
 
 	n1.setNext(node.prefix[dv], n2)
@@ -125,7 +122,6 @@ func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, p
 func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node, pos, dv int) bool {
 	n1 := &Node{
 		prefix: node.prefix[:dv],
-		edges:  &[256]*Node{},
 	}
 
 	n2 := &Node{
@@ -137,7 +133,6 @@ func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node,
 	n3 := &Node{
 		prefix: key[pos+dv+1:],
 		value:  value,
-		edges:  &[256]*Node{},
 	}
 
 	n1.setNext(node.prefix[dv], n2)

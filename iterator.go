@@ -14,6 +14,10 @@ func (r *Radix) Iterate(from []byte, fn func(key []byte, value interface{})) {
 }
 
 func (r *Radix) iterate(key []byte, node *Node, fn func(key []byte, value interface{})) {
+	if node.edges == nil {
+		return
+	}
+
 	for i, next := range node.edges {
 		ckey := make([]byte, len(key))
 		copy(ckey, key)

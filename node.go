@@ -15,14 +15,26 @@ type Node struct {
 }
 
 func (n *Node) next(b byte) *Node {
+	if n.edges == nil {
+		return nil
+	}
+
 	return n.edges[b]
 }
 
 func (n *Node) setNext(b byte, node *Node) {
+	if n.edges == nil {
+		n.edges = &[256]*Node{}
+	}
+
 	n.edges[int(b)] = node
 }
 
 func (n *Node) swapNext(b byte, existing, next *Node) bool {
+	if n.edges == nil {
+		n.edges = &[256]*Node{}
+	}
+
 	oPtr := (*unsafe.Pointer)(unsafe.Pointer(&n.edges[b]))
 	old := unsafe.Pointer(existing)
 	new := unsafe.Pointer(next)
