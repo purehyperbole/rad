@@ -2,8 +2,10 @@ package rad
 
 import (
 	"bytes"
+	"sync"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -131,6 +133,41 @@ func TestIterate(t *testing.T) {
 
 	for i := range results {
 		assert.True(t, bytes.HasPrefix(results[i], []byte("hypot")))
+	}
+}
+
+func TestConcurrentInsert(t *testing.T) {
+	var wg sync.WaitGroup
+
+	r := New()
+
+	batch := make([][][]byte, 8)
+
+	for i := 0; i < 8; i++ {
+		batch[i] = make([][]byte, 1000)
+
+		for x := 0; x < 1000; x++ {
+			batch[i][x] = []byte(uuid.New().String())
+		}
+	}
+
+	wg.Add(8)
+
+	for i := 0; i < 8; i++ {
+		for x := range batch[i] {
+			r.MustInsert(batch[i][x], batch[i][x])
+		}
+		wg.Done()
+	}
+
+	wg.Wait()
+
+	for i := 0; i < 8; i++ {
+		for x := 0; x < 1000; x++ {
+			value := r.Lookup(batch[i][x])
+			require.NotNil(t, value)
+			assert.True(t, bytes.Equal(value.([]byte), batch[i][x]))
+		}
 	}
 }
 

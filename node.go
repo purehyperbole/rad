@@ -32,6 +32,7 @@ func (n *Node) setNext(b byte, node *Node) {
 
 func (n *Node) swapNext(b byte, existing, next *Node) bool {
 	if n.edges == nil {
+		// maybe need to compare and swap this?
 		n.edges = &[256]*Node{}
 	}
 
