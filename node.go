@@ -32,14 +32,21 @@ func (n *Node) setNext(b byte, node *Node) {
 
 func (n *Node) swapNext(b byte, existing, next *Node) bool {
 	if n.edges == nil {
-		// maybe need to compare and swap this?
-		n.edges = &[256]*Node{}
+		// swap edges and ignore if it fails
+		n.setupEdges()
 	}
 
 	oPtr := (*unsafe.Pointer)(unsafe.Pointer(&n.edges[b]))
 	old := unsafe.Pointer(existing)
 	new := unsafe.Pointer(next)
 	return atomic.CompareAndSwapPointer(oPtr, old, new)
+}
+
+func (n *Node) setupEdges() {
+	oPtr := (*unsafe.Pointer)(unsafe.Pointer(&n.edges))
+	old := unsafe.Pointer(nil)
+	new := unsafe.Pointer(&[256]*Node{})
+	_ = atomic.CompareAndSwapPointer(oPtr, old, new)
 }
 
 func (n *Node) print() {
@@ -51,9 +58,11 @@ func (n *Node) print() {
 
 	output = append(output, "	Edges: [")
 
-	for char, edge := range n.edges {
-		if edge != nil {
-			output = append(output, fmt.Sprintf("		%s: %s", string(byte(char)), edge.prefix))
+	if n.edges != nil {
+		for char, edge := range n.edges {
+			if edge != nil {
+				output = append(output, fmt.Sprintf("		%s: %s", string(byte(char)), edge.prefix))
+			}
 		}
 	}
 

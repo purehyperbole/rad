@@ -20,6 +20,10 @@ func Graphviz(r *Radix) string {
 }
 
 func graphviz(r *Radix, gvoutput *[]string, gvzc *int, previous string, n *Node) {
+	if n.edges == nil {
+		return
+	}
+
 	for i, next := range n.edges {
 		if next == nil {
 			continue

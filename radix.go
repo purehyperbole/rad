@@ -112,6 +112,7 @@ func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, p
 	n2 := &Node{
 		prefix: node.prefix[dv+1:],
 		value:  node.value,
+		edges:  node.edges,
 	}
 
 	n1.setNext(node.prefix[dv], n2)

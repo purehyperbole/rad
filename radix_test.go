@@ -18,52 +18,49 @@ type testvalue struct {
 
 func TestRadixInsertLookup(t *testing.T) {
 	cases := []struct {
-		Name          string
-		ExpectedNodes int
-		Existing      []testvalue
-		Lookups       []testvalue
+		Name     string
+		Existing []testvalue
+		Lookups  []testvalue
 	}{
 		{
 			"simple",
-			2,
 			[]testvalue{{"test", "1234", "est"}},
 			[]testvalue{{"test", "1234", "est"}},
 		},
 		{
 			"normal",
-			2,
 			[]testvalue{{"too", "1234", "oo"}, {"bad", "5678", "ad"}, {"you'll", "9101112", "ou'll"}, {"never", "13141516", "ever"}, {"be", "17181920", "e"}, {"rad", "21222324", "ad"}},
 			[]testvalue{{"too", "1234", "oo"}, {"bad", "5678", "ad"}, {"you'll", "9101112", "ou'll"}, {"never", "13141516", "ever"}, {"be", "17181920", "e"}, {"rad", "21222324", "ad"}},
 		},
 		{
 			"derivative",
-			3,
 			[]testvalue{{"test", "1234", "est"}, {"test1234", "bacon", "est"}},
 			[]testvalue{{"test1234", "bacon", "234"}},
 		},
 		{
 			"split",
-			3,
 			[]testvalue{{"test1234", "bacon", "234"}, {"test", "1234", "est"}},
 			[]testvalue{{"test1234", "bacon", "234"}, {"test1234", "bacon", "234"}},
 		},
 		{
 			"split-single-shared-character",
-			5,
 			[]testvalue{{"test", "1234", "est"}, {"test1234", "bacon", "est"}, {"test1000", "egg", "est"}},
 			[]testvalue{{"test", "1234", "est"}, {"test1234", "bacon", "34"}, {"test1000", "egg", "00"}},
 		},
 		{
 			"complex",
-			13,
 			[]testvalue{{"test", "1234", "st"}, {"test1234", "bacon", "234"}, {"tomato", "egg", "ato"}, {"tamale", "hash browns", "male"}, {"todo", "beans", ""}, {"todos", "mushrooms", "s"}, {"abalienate", "toast", ""}, {"abalienated", "onions", ""}, {"abalienating", "sausage", "ng"}},
 			[]testvalue{{"test", "1234", "st"}, {"test1234", "bacon", "234"}, {"tomato", "egg", "ato"}, {"tamale", "hash browns", "male"}, {"todo", "beans", "o"}, {"todos", "mushrooms", ""}, {"abalienate", "toast", ""}, {"abalienated", "onions", ""}, {"abalienating", "sausage", "ng"}},
 		},
 		{
 			"single-character",
-			3,
 			[]testvalue{{"todo", "toast", "odo"}, {"todos", "bacon", ""}},
 			[]testvalue{{"todo", "toast", "odo"}, {"todos", "bacon", ""}},
+		},
+		{
+			"mixed",
+			[]testvalue{{"unsophisticatedness", "0", "-"}, {"unsophisticate", "1", "-"}, {"unsophisticatedly", "2", "-"}, {"unsophisticated", "3", "-"}, {"unsophistication", "4", "-"}, {"unsophistic", "5", "-"}, {"unsophistically", "6", "-"}, {"unsophistical", "7", "-"}},
+			[]testvalue{{"unsophisticatedness", "0", "-"}, {"unsophisticate", "1", "-"}, {"unsophisticatedly", "2", "-"}, {"unsophisticated", "3", "-"}, {"unsophistication", "4", "-"}, {"unsophistic", "5", "-"}, {"unsophistically", "6", "-"}, {"unsophistical", "7", "-"}},
 		},
 	}
 
