@@ -74,10 +74,6 @@ func TestRadixInsertLookup(t *testing.T) {
 				r.Insert([]byte(kv.Key), kv.Value)
 			}
 
-			if tc.Name == "simple" {
-				fmt.Println(Graphviz(r))
-			}
-
 			for _, kv := range tc.Lookups {
 				value := r.Lookup([]byte(kv.Key))
 				require.NotNil(t, value)
@@ -132,6 +128,8 @@ func TestIterate(t *testing.T) {
 		results = append(results, key)
 	})
 
+	fmt.Println(Graphviz(r))
+
 	assert.Len(t, results, 13)
 
 	for i := range results {
@@ -181,19 +179,19 @@ func TestConcurrentInsertInt(t *testing.T) {
 
 	r := New()
 
-	batch := make([][][]byte, 16)
+	batch := make([][][]byte, 32)
 
-	for i := 0; i < 16; i++ {
-		batch[i] = make([][]byte, 1000)
+	for i := 0; i < 32; i++ {
+		batch[i] = make([][]byte, 10000)
 
-		for x := 0; x < 1000; x++ {
+		for x := 0; x < 10000; x++ {
 			batch[i][x] = []byte(strconv.Itoa(x))
 		}
 	}
 
-	wg.Add(16)
+	wg.Add(32)
 
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 32; i++ {
 		go func(b int) {
 			for x := range batch[b] {
 				r.Insert(batch[b][x], batch[b][x])
@@ -204,12 +202,10 @@ func TestConcurrentInsertInt(t *testing.T) {
 
 	wg.Wait()
 
-	for i := 0; i < 8; i++ {
-		for x := 0; x < 1000; x++ {
-			value := r.Lookup(batch[i][x])
-			require.NotNil(t, value)
-			assert.True(t, bytes.Equal(value.([]byte), batch[i][x]))
-		}
+	for x := 0; x < 1000; x++ {
+		value := r.Lookup(batch[0][x])
+		require.NotNil(t, value)
+		assert.True(t, bytes.Equal(value.([]byte), batch[0][x]))
 	}
 }
 

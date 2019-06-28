@@ -1,5 +1,7 @@
 package rad
 
+import "fmt"
+
 // Iterate over every key from a given point
 func (r *Radix) Iterate(from []byte, fn func(key []byte, value interface{})) {
 	var node *Node
@@ -15,6 +17,7 @@ func (r *Radix) Iterate(from []byte, fn func(key []byte, value interface{})) {
 
 func (r *Radix) iterate(key []byte, node *Node, fn func(key []byte, value interface{})) {
 	if node == nil {
+		fmt.Println("NIL")
 		return
 	}
 
