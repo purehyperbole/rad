@@ -1,5 +1,10 @@
 package rad
 
+import (
+	"sync/atomic"
+	"unsafe"
+)
+
 // Radix tree
 type Radix struct {
 	root *Node
@@ -9,7 +14,7 @@ type Radix struct {
 func New() *Radix {
 	return &Radix{
 		root: &Node{
-			edges: &[256]*Node{},
+			edges: unsafe.Pointer(&[256]unsafe.Pointer{}),
 		},
 	}
 }
@@ -92,7 +97,7 @@ func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, po
 	return parent.swapNext(key[edgePos], node, &Node{
 		prefix: node.prefix,
 		value:  value,
-		edges:  node.edges,
+		edges:  atomic.LoadPointer(&node.edges),
 	})
 }
 

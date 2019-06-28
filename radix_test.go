@@ -2,6 +2,8 @@ package rad
 
 import (
 	"bytes"
+	"fmt"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -70,6 +72,10 @@ func TestRadixInsertLookup(t *testing.T) {
 
 			for _, kv := range tc.Existing {
 				r.Insert([]byte(kv.Key), kv.Value)
+			}
+
+			if tc.Name == "simple" {
+				fmt.Println(Graphviz(r))
 			}
 
 			for _, kv := range tc.Lookups {
@@ -151,10 +157,49 @@ func TestConcurrentInsert(t *testing.T) {
 	wg.Add(8)
 
 	for i := 0; i < 8; i++ {
-		for x := range batch[i] {
-			r.MustInsert(batch[i][x], batch[i][x])
+		go func(b int) {
+			for x := range batch[b] {
+				r.MustInsert(batch[b][x], batch[b][x])
+			}
+			wg.Done()
+		}(i)
+	}
+
+	wg.Wait()
+
+	for i := 0; i < 8; i++ {
+		for x := 0; x < 1000; x++ {
+			value := r.Lookup(batch[i][x])
+			require.NotNil(t, value)
+			assert.True(t, bytes.Equal(value.([]byte), batch[i][x]))
 		}
-		wg.Done()
+	}
+}
+
+func TestConcurrentInsertInt(t *testing.T) {
+	var wg sync.WaitGroup
+
+	r := New()
+
+	batch := make([][][]byte, 16)
+
+	for i := 0; i < 16; i++ {
+		batch[i] = make([][]byte, 1000)
+
+		for x := 0; x < 1000; x++ {
+			batch[i][x] = []byte(strconv.Itoa(x))
+		}
+	}
+
+	wg.Add(16)
+
+	for i := 0; i < 16; i++ {
+		go func(b int) {
+			for x := range batch[b] {
+				r.Insert(batch[b][x], batch[b][x])
+			}
+			wg.Done()
+		}(i)
 	}
 
 	wg.Wait()

@@ -24,7 +24,8 @@ func graphviz(r *Radix, gvoutput *[]string, gvzc *int, previous string, n *Node)
 		return
 	}
 
-	for i, next := range n.edges {
+	for i := 0; i < 256; i++ {
+		next := n.next(byte(i))
 		if next == nil {
 			continue
 		}
