@@ -9,7 +9,7 @@ import (
 
 // Node stores all leaf data
 type Node struct {
-	edges  unsafe.Pointer // *[256]unsafe.Pointer
+	edges  unsafe.Pointer
 	prefix []byte
 	value  interface{}
 }
@@ -30,7 +30,7 @@ func (n *Node) setNext(b byte, node *Node) {
 
 	edges := (*[256]unsafe.Pointer)(n.edges)
 
-	(*edges)[int(b)] = unsafe.Pointer(node)
+	edges[int(b)] = unsafe.Pointer(node)
 }
 
 func (n *Node) swapNext(b byte, existing, next *Node) bool {

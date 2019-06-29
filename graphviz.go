@@ -29,12 +29,11 @@ func graphviz(r *Radix, gvoutput *[]string, gvzc *int, previous string, n *Node)
 		if next == nil {
 			continue
 		}
+
 		(*gvzc)++
 
-		n = next
+		(*gvoutput) = append((*gvoutput), fmt.Sprintf("  \"%s\" -> \"[%d] %s\" [label=\"%s\"]", previous, *gvzc, string(next.prefix), string(byte(i))))
 
-		(*gvoutput) = append((*gvoutput), fmt.Sprintf("  \"%s\" -> \"[%d] %s\" [label=\"%s\"]", previous, *gvzc, string(n.prefix), string(byte(i))))
-
-		graphviz(r, gvoutput, gvzc, fmt.Sprintf("[%d] %s", *gvzc, string(n.prefix)), n)
+		graphviz(r, gvoutput, gvzc, fmt.Sprintf("[%d] %s", *gvzc, string(next.prefix)), next)
 	}
 }

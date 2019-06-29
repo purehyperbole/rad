@@ -2,7 +2,6 @@ package rad
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 	"sync"
 	"testing"
@@ -128,8 +127,6 @@ func TestIterate(t *testing.T) {
 		results = append(results, key)
 	})
 
-	fmt.Println(Graphviz(r))
-
 	assert.Len(t, results, 13)
 
 	for i := range results {
@@ -177,11 +174,13 @@ func TestConcurrentInsert(t *testing.T) {
 func TestConcurrentInsertInt(t *testing.T) {
 	var wg sync.WaitGroup
 
+	w := 32
+
 	r := New()
 
-	batch := make([][][]byte, 32)
+	batch := make([][][]byte, w)
 
-	for i := 0; i < 32; i++ {
+	for i := 0; i < w; i++ {
 		batch[i] = make([][]byte, 10000)
 
 		for x := 0; x < 10000; x++ {
@@ -189,9 +188,9 @@ func TestConcurrentInsertInt(t *testing.T) {
 		}
 	}
 
-	wg.Add(32)
+	wg.Add(w)
 
-	for i := 0; i < 32; i++ {
+	for i := 0; i < w; i++ {
 		go func(b int) {
 			for x := range batch[b] {
 				r.Insert(batch[b][x], batch[b][x])

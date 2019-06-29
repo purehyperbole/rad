@@ -1,7 +1,5 @@
 package rad
 
-import "fmt"
-
 // Iterate over every key from a given point
 func (r *Radix) Iterate(from []byte, fn func(key []byte, value interface{})) {
 	var node *Node
@@ -16,36 +14,29 @@ func (r *Radix) Iterate(from []byte, fn func(key []byte, value interface{})) {
 }
 
 func (r *Radix) iterate(key []byte, node *Node, fn func(key []byte, value interface{})) {
-	if node == nil {
-		fmt.Println("NIL")
-		return
-	}
-
 	if node.edges == nil {
 		return
 	}
 
 	for i := 0; i < 256; i++ {
 		next := node.next(byte(i))
-		ckey := make([]byte, len(key))
-		copy(ckey, key)
-
 		if next == nil {
 			continue
 		}
 
-		node = next
+		ckey := make([]byte, len(key))
+		copy(ckey, key)
 
 		ckey = append(ckey, byte(i))
 
-		if len(node.prefix) > 0 {
-			ckey = append(ckey, node.prefix...)
+		if len(next.prefix) > 0 {
+			ckey = append(ckey, next.prefix...)
 		}
 
-		if node.value != nil {
-			fn(ckey, node.value)
+		if next.value != nil {
+			fn(ckey, next.value)
 		}
 
-		r.iterate(ckey, node, fn)
+		r.iterate(ckey, next, fn)
 	}
 }
