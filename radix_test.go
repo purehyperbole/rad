@@ -2,6 +2,7 @@ package rad
 
 import (
 	"bytes"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -151,10 +152,12 @@ func TestConcurrentInsert(t *testing.T) {
 	wg.Add(8)
 
 	for i := 0; i < 8; i++ {
-		for x := range batch[i] {
-			r.MustInsert(batch[i][x], batch[i][x])
-		}
-		wg.Done()
+		go func(b int) {
+			for x := range batch[b] {
+				r.MustInsert(batch[b][x], batch[b][x])
+			}
+			wg.Done()
+		}(i)
 	}
 
 	wg.Wait()
@@ -165,6 +168,43 @@ func TestConcurrentInsert(t *testing.T) {
 			require.NotNil(t, value)
 			assert.True(t, bytes.Equal(value.([]byte), batch[i][x]))
 		}
+	}
+}
+
+func TestConcurrentInsertInt(t *testing.T) {
+	var wg sync.WaitGroup
+
+	w := 32
+
+	r := New()
+
+	batch := make([][][]byte, w)
+
+	for i := 0; i < w; i++ {
+		batch[i] = make([][]byte, 10000)
+
+		for x := 0; x < 10000; x++ {
+			batch[i][x] = []byte(strconv.Itoa(x))
+		}
+	}
+
+	wg.Add(w)
+
+	for i := 0; i < w; i++ {
+		go func(b int) {
+			for x := range batch[b] {
+				r.Insert(batch[b][x], batch[b][x])
+			}
+			wg.Done()
+		}(i)
+	}
+
+	wg.Wait()
+
+	for x := 0; x < 1000; x++ {
+		value := r.Lookup(batch[0][x])
+		require.NotNil(t, value)
+		assert.True(t, bytes.Equal(value.([]byte), batch[0][x]))
 	}
 }
 

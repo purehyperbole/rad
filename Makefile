@@ -1,5 +1,5 @@
 test:
-	go test -v ./... --cover
+	go test -v --race ./...
 
 deps:
 	go get github.com/stretchr/testify

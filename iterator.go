@@ -18,26 +18,25 @@ func (r *Radix) iterate(key []byte, node *Node, fn func(key []byte, value interf
 		return
 	}
 
-	for i, next := range node.edges {
-		ckey := make([]byte, len(key))
-		copy(ckey, key)
-
+	for i := 0; i < 256; i++ {
+		next := node.next(byte(i))
 		if next == nil {
 			continue
 		}
 
-		node = next
+		ckey := make([]byte, len(key))
+		copy(ckey, key)
 
 		ckey = append(ckey, byte(i))
 
-		if len(node.prefix) > 0 {
-			ckey = append(ckey, node.prefix...)
+		if len(next.prefix) > 0 {
+			ckey = append(ckey, next.prefix...)
 		}
 
-		if node.value != nil {
-			fn(ckey, node.value)
+		if next.value != nil {
+			fn(ckey, next.value)
 		}
 
-		r.iterate(ckey, node, fn)
+		r.iterate(ckey, next, fn)
 	}
 }

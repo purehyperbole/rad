@@ -9,44 +9,48 @@ import (
 
 // Node stores all leaf data
 type Node struct {
-	edges  *[256]*Node
+	edges  unsafe.Pointer
 	prefix []byte
 	value  interface{}
 }
 
 func (n *Node) next(b byte) *Node {
-	if n.edges == nil {
+	edges := (*[256]unsafe.Pointer)(atomic.LoadPointer(&n.edges))
+	if edges == nil {
 		return nil
 	}
 
-	return n.edges[b]
+	return (*Node)(atomic.LoadPointer(&edges[b]))
 }
 
 func (n *Node) setNext(b byte, node *Node) {
 	if n.edges == nil {
-		n.edges = &[256]*Node{}
+		n.edges = unsafe.Pointer(&[256]unsafe.Pointer{})
 	}
 
-	n.edges[int(b)] = node
+	edges := (*[256]unsafe.Pointer)(n.edges)
+
+	edges[int(b)] = unsafe.Pointer(node)
 }
 
 func (n *Node) swapNext(b byte, existing, next *Node) bool {
-	if n.edges == nil {
-		// swap edges and ignore if it fails
+	edges := (*[256]unsafe.Pointer)(atomic.LoadPointer(&n.edges))
+
+	if edges == nil {
 		n.setupEdges()
+		edges = (*[256]unsafe.Pointer)(atomic.LoadPointer(&n.edges))
 	}
 
-	oPtr := (*unsafe.Pointer)(unsafe.Pointer(&n.edges[b]))
 	old := unsafe.Pointer(existing)
 	new := unsafe.Pointer(next)
-	return atomic.CompareAndSwapPointer(oPtr, old, new)
+	return atomic.CompareAndSwapPointer(&edges[b], old, new)
 }
 
 func (n *Node) setupEdges() {
-	oPtr := (*unsafe.Pointer)(unsafe.Pointer(&n.edges))
+	// swap edges and ignore if it fails
 	old := unsafe.Pointer(nil)
-	new := unsafe.Pointer(&[256]*Node{})
-	_ = atomic.CompareAndSwapPointer(oPtr, old, new)
+	new := unsafe.Pointer(&[256]unsafe.Pointer{})
+	_ = atomic.CompareAndSwapPointer(&n.edges, old, new)
 }
 
 func (n *Node) print() {
@@ -59,9 +63,10 @@ func (n *Node) print() {
 	output = append(output, "	Edges: [")
 
 	if n.edges != nil {
-		for char, edge := range n.edges {
+		for i := 0; i < 256; i++ {
+			edge := n.next(byte(i))
 			if edge != nil {
-				output = append(output, fmt.Sprintf("		%s: %s", string(byte(char)), edge.prefix))
+				output = append(output, fmt.Sprintf("		%s: %s", string(byte(i)), edge.prefix))
 			}
 		}
 	}
