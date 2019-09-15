@@ -9,9 +9,10 @@ import (
 
 // Node stores all leaf data
 type Node struct {
-	edges  unsafe.Pointer
-	prefix []byte
-	value  interface{}
+	edges     unsafe.Pointer
+	edgecount int32 // would be nice if this could be uint8
+	prefix    []byte
+	value     interface{}
 }
 
 func (n *Node) next(b byte) *Node {
@@ -31,6 +32,8 @@ func (n *Node) setNext(b byte, node *Node) {
 	edges := (*[256]unsafe.Pointer)(n.edges)
 
 	edges[int(b)] = unsafe.Pointer(node)
+
+	n.edgecount++
 }
 
 func (n *Node) swapNext(b byte, existing, next *Node) bool {
@@ -43,7 +46,13 @@ func (n *Node) swapNext(b byte, existing, next *Node) bool {
 
 	old := unsafe.Pointer(existing)
 	new := unsafe.Pointer(next)
-	return atomic.CompareAndSwapPointer(&edges[b], old, new)
+	successful := atomic.CompareAndSwapPointer(&edges[b], old, new)
+
+	if existing == nil && successful {
+		atomic.AddInt32(&n.edgecount, 1)
+	}
+
+	return successful
 }
 
 func (n *Node) setupEdges() {
@@ -59,6 +68,7 @@ func (n *Node) print() {
 	output = append(output, fmt.Sprintf("	Prefix Length: %d", len(n.prefix)))
 	output = append(output, fmt.Sprintf("	Prefix: %s", string(n.prefix)))
 	output = append(output, fmt.Sprintf("	Value: %d", n.value))
+	output = append(output, fmt.Sprintf("	Edge Count: %d", n.edgecount))
 
 	output = append(output, "	Edges: [")
 

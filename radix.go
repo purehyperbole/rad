@@ -54,6 +54,11 @@ func (r *Radix) Lookup(key []byte) interface{} {
 	return node.value
 }
 
+// Delete a key from the tree
+func (r *Radix) Delete(key []byte) {
+
+}
+
 func (r *Radix) find(key []byte) (*Node, *Node, int, int) {
 	var pos, dv int
 	var node, parent *Node
@@ -95,9 +100,10 @@ func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, po
 	edgePos := pos - (len(node.prefix) + 1)
 
 	return parent.swapNext(key[edgePos], node, &Node{
-		prefix: node.prefix,
-		value:  value,
-		edges:  atomic.LoadPointer(&node.edges),
+		prefix:    node.prefix,
+		value:     value,
+		edges:     atomic.LoadPointer(&node.edges),
+		edgecount: atomic.LoadInt32(&node.edgecount),
 	})
 }
 
@@ -115,9 +121,10 @@ func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, p
 	}
 
 	n2 := &Node{
-		prefix: node.prefix[dv+1:],
-		value:  node.value,
-		edges:  node.edges,
+		prefix:    node.prefix[dv+1:],
+		value:     node.value,
+		edges:     atomic.LoadPointer(&node.edges),
+		edgecount: atomic.LoadInt32(&node.edgecount),
 	}
 
 	n1.setNext(node.prefix[dv], n2)
@@ -131,9 +138,10 @@ func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node,
 	}
 
 	n2 := &Node{
-		prefix: node.prefix[dv+1:],
-		value:  node.value,
-		edges:  node.edges,
+		prefix:    node.prefix[dv+1:],
+		value:     node.value,
+		edges:     atomic.LoadPointer(&node.edges),
+		edgecount: atomic.LoadInt32(&node.edgecount),
 	}
 
 	n3 := &Node{
