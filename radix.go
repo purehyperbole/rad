@@ -117,7 +117,7 @@ func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, p
 	n2 := &Node{
 		prefix: node.prefix[dv+1:],
 		value:  node.value,
-		edges:  node.edges,
+		edges:  atomic.LoadPointer(&node.edges),
 	}
 
 	n1.setNext(node.prefix[dv], n2)
@@ -133,7 +133,7 @@ func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node,
 	n2 := &Node{
 		prefix: node.prefix[dv+1:],
 		value:  node.value,
-		edges:  node.edges,
+		edges:  atomic.LoadPointer(&node.edges),
 	}
 
 	n3 := &Node{
