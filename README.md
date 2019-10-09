@@ -52,6 +52,20 @@ if r.Insert([]byte("key"), &Thing{12345}) {
 r.MustInsert([]byte("key"), &Thing{12345})
 ```
 
+`Iterate` allows for iterating keys in the tree
+
+```go
+// iterate over all keys
+r.Iterate(nil, func(key []byte, value interface{}) {
+    ...
+})
+
+// iterate over all subkeys of "rad"
+r.Iterate([]byte("rad"), func(key []byte, value interface{}) {
+    ...
+})
+```
+
 # Features/Wishlist
 
 - [x] Lock free Insert using CAS (compare & swap)
