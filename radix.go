@@ -1,7 +1,6 @@
 package rad
 
 import (
-	"sync/atomic"
 	"unsafe"
 )
 
@@ -14,7 +13,7 @@ type Radix struct {
 func New() *Radix {
 	return &Radix{
 		root: &Node{
-			edges: unsafe.Pointer(&[256]unsafe.Pointer{}),
+			edges: upptr(unsafe.Pointer(&[256]unsafe.Pointer{})),
 		},
 	}
 }
@@ -88,6 +87,7 @@ func (r *Radix) insertNode(key []byte, value interface{}, parent, node *Node, po
 	return parent.swapNext(key[pos], nil, &Node{
 		prefix: key[pos+1:],
 		value:  value,
+		edges:  upptr(unsafe.Pointer(nil)),
 	})
 }
 
@@ -97,7 +97,7 @@ func (r *Radix) updateNode(key []byte, value interface{}, parent, node *Node, po
 	return parent.swapNext(key[edgePos], node, &Node{
 		prefix: node.prefix,
 		value:  value,
-		edges:  atomic.LoadPointer(&node.edges),
+		edges:  node.edges,
 	})
 }
 
@@ -112,12 +112,13 @@ func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, p
 	n1 := &Node{
 		prefix: pfx,
 		value:  value,
+		edges:  upptr(unsafe.Pointer(nil)),
 	}
 
 	n2 := &Node{
 		prefix: node.prefix[dv+1:],
 		value:  node.value,
-		edges:  atomic.LoadPointer(&node.edges),
+		edges:  node.edges,
 	}
 
 	n1.setNext(node.prefix[dv], n2)
@@ -128,17 +129,19 @@ func (r *Radix) splitTwoWay(key []byte, value interface{}, parent, node *Node, p
 func (r *Radix) splitThreeWay(key []byte, value interface{}, parent, node *Node, pos, dv int) bool {
 	n1 := &Node{
 		prefix: node.prefix[:dv],
+		edges:  upptr(unsafe.Pointer(nil)),
 	}
 
 	n2 := &Node{
 		prefix: node.prefix[dv+1:],
 		value:  node.value,
-		edges:  atomic.LoadPointer(&node.edges),
+		edges:  node.edges,
 	}
 
 	n3 := &Node{
 		prefix: key[pos+dv+1:],
 		value:  value,
+		edges:  upptr(unsafe.Pointer(nil)),
 	}
 
 	n1.setNext(node.prefix[dv], n2)
