@@ -31,7 +31,7 @@ func (n *Node) setNext(b byte, node *Node) {
 		n.edges = upptr(unsafe.Pointer(edges))
 	}
 
-	edges[int(b)] = unsafe.Pointer(node)
+	edges[b] = unsafe.Pointer(node)
 }
 
 func (n *Node) swapNext(b byte, existing, next *Node) bool {
