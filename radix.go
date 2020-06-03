@@ -1,6 +1,7 @@
 package rad
 
 import (
+	"reflect"
 	"unsafe"
 )
 
@@ -20,25 +21,82 @@ func New() *Radix {
 
 // Insert or update a keypair
 func (r *Radix) Insert(key []byte, value interface{}) bool {
+	var success bool
+
 	parent, node, pos, dv := r.find(key)
 
-	switch {
-	case shouldInsert(key, node, parent, pos, dv):
-		return r.insertNode(key, value, parent, node, pos, dv)
-	case shouldUpdate(key, node, parent, pos, dv):
-		return r.updateNode(key, value, parent, node, pos, dv)
-	case shouldSplitThreeWay(key, node, parent, pos, dv):
-		return r.splitThreeWay(key, value, parent, node, pos, dv)
-	case shouldSplitTwoWay(key, node, parent, pos, dv):
-		return r.splitTwoWay(key, value, parent, node, pos, dv)
-	}
+	for {
+		switch {
+		case shouldInsert(key, node, parent, pos, dv):
+			success = r.insertNode(key, value, parent, node, pos, dv)
+		case shouldUpdate(key, node, parent, pos, dv):
+			success = r.updateNode(key, value, parent, node, pos, dv)
+		case shouldSplitThreeWay(key, node, parent, pos, dv):
+			success = r.splitThreeWay(key, value, parent, node, pos, dv)
+		case shouldSplitTwoWay(key, node, parent, pos, dv):
+			success = r.splitTwoWay(key, value, parent, node, pos, dv)
+		}
 
-	return false
+		if success {
+			return true
+		}
+
+		parent, node, pos, dv = r.find(key)
+
+		if shouldUpdate(key, node, parent, pos, dv) {
+			// someone else updated the same value we did
+			return false
+		}
+	}
 }
 
 // MustInsert attempts to insert a value until it is successful
 func (r *Radix) MustInsert(key []byte, value interface{}) {
 	for !r.Insert(key, value) {
+	}
+}
+
+// Swap atomically swaps a value
+func (r *Radix) Swap(key []byte, old, new interface{}) bool {
+	var success bool
+
+	parent, node, pos, dv := r.find(key)
+
+	// if we didnt find a node and the old value is not empty, fail
+	if shouldUpdate(key, node, parent, pos, dv) && old == nil {
+		return false
+	}
+
+	// if we did find a node, check that the value we have matches or fail
+	if node != nil {
+		if !reflect.DeepEqual(node.value, old) {
+			// this is probably going to be slow :/
+			return false
+		}
+	}
+
+	for {
+		switch {
+		case shouldInsert(key, node, parent, pos, dv):
+			success = r.insertNode(key, new, parent, node, pos, dv)
+		case shouldUpdate(key, node, parent, pos, dv):
+			success = r.updateNode(key, new, parent, node, pos, dv)
+		case shouldSplitThreeWay(key, node, parent, pos, dv):
+			success = r.splitThreeWay(key, new, parent, node, pos, dv)
+		case shouldSplitTwoWay(key, node, parent, pos, dv):
+			success = r.splitTwoWay(key, new, parent, node, pos, dv)
+		}
+
+		if success {
+			return true
+		}
+
+		parent, node, pos, dv = r.find(key)
+
+		// if true, someone else updated the same value we did
+		if shouldUpdate(key, node, parent, pos, dv) {
+			return false
+		}
 	}
 }
 
