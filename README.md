@@ -52,6 +52,11 @@ if r.Insert([]byte("key"), &Thing{12345}) {
 r.MustInsert([]byte("key"), &Thing{12345})
 ```
 
+`Swap` can be used to atomically swap a value. It will return false if the swap was unsuccessful.
+```go
+r.Swap([]byte("my-key"), &Thing{"old-value"}, &Thing{"new-value"})
+```
+
 `Iterate` allows for iterating keys in the tree
 
 ```go

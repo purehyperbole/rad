@@ -2,8 +2,10 @@ package rad
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/google/uuid"
@@ -205,6 +207,64 @@ func TestConcurrentInsertInt(t *testing.T) {
 		value := r.Lookup(batch[0][x])
 		require.NotNil(t, value)
 		assert.True(t, bytes.Equal(value.([]byte), batch[0][x]))
+	}
+}
+
+func TestConcurrentSwap(t *testing.T) {
+	for x := 0; x < 100; x++ {
+		var wg sync.WaitGroup
+		var failures int64
+
+		w := 32
+
+		r := New()
+
+		wg.Add(w)
+
+		for i := 0; i < w; i++ {
+			go func(b int) {
+				val := fmt.Sprintf("test-value-%d", b)
+
+				if !r.Swap([]byte("test-key"), nil, []byte(val)) {
+					atomic.AddInt64(&failures, 1)
+				}
+
+				wg.Done()
+			}(i)
+		}
+
+		wg.Wait()
+
+		assert.Equal(t, int64(w-1), failures)
+	}
+
+	for x := 0; x < 100; x++ {
+		var wg sync.WaitGroup
+		var failures int64
+
+		w := 32
+
+		r := New()
+
+		wg.Add(w)
+
+		r.Insert([]byte("test-key"), []byte("test-value"))
+
+		for i := 0; i < w; i++ {
+			go func(b int) {
+				val := fmt.Sprintf("test-value-%d", b)
+
+				if !r.Swap([]byte("test-key"), []byte("test-value"), []byte(val)) {
+					atomic.AddInt64(&failures, 1)
+				}
+
+				wg.Done()
+			}(i)
+		}
+
+		wg.Wait()
+
+		assert.Equal(t, int64(w-1), failures)
 	}
 }
 
