@@ -210,6 +210,30 @@ func TestConcurrentInsertInt(t *testing.T) {
 	}
 }
 
+func TestSwap(t *testing.T) {
+	uuids := make([][]byte, 10000)
+
+	for i := 0; i < 10000; i++ {
+		uuids[i] = []byte(uuid.New().String())
+	}
+
+	r := New()
+
+	// swap empty
+	for x := 0; x < 10000; x++ {
+		success := r.Swap(uuids[x], nil, uuids[x])
+		require.True(t, success)
+	}
+
+	v := []byte("new-value")
+
+	// swap existing
+	for x := 0; x < 10000; x++ {
+		success := r.Swap(uuids[x], uuids[x], v)
+		require.True(t, success)
+	}
+}
+
 func TestConcurrentSwap(t *testing.T) {
 	for x := 0; x < 100; x++ {
 		var wg sync.WaitGroup

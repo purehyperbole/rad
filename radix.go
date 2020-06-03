@@ -68,9 +68,9 @@ func (r *Radix) Swap(key []byte, old, new interface{}) bool {
 	}
 
 	// if we did find a node, check that the value we have matches or fail
-	if node != nil {
+	if node != nil && old != nil {
+		// this is probably going to be slow :/
 		if !reflect.DeepEqual(node.value, old) {
-			// this is probably going to be slow :/
 			return false
 		}
 	}
