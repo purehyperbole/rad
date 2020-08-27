@@ -125,10 +125,12 @@ func TestIterate(t *testing.T) {
 		r.Insert([]byte(k), []byte(k))
 	}
 
-	r.Iterate([]byte("hypot"), func(key []byte, value interface{}) {
+	err := r.Iterate([]byte("hypot"), func(key []byte, value interface{}) error {
 		results = append(results, key)
+		return nil
 	})
 
+	assert.Nil(t, err)
 	assert.Len(t, results, 13)
 
 	for i := range results {

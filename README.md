@@ -61,13 +61,16 @@ r.Swap([]byte("my-key"), &Thing{"old-value"}, &Thing{"new-value"})
 
 ```go
 // iterate over all keys
-r.Iterate(nil, func(key []byte, value interface{}) {
+r.Iterate(nil, func(key []byte, value interface{}) error {
     ...
+    // if the returned error is not nil, the iterator will stop
+    return nil
 })
 
 // iterate over all subkeys of "rad"
-r.Iterate([]byte("rad"), func(key []byte, value interface{}) {
+r.Iterate([]byte("rad"), func(key []byte, value interface{}) error {
     ...
+    return nil
 })
 ```
 
