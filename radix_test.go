@@ -2,6 +2,7 @@ package rad
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -136,6 +137,12 @@ func TestIterate(t *testing.T) {
 	for i := range results {
 		assert.True(t, bytes.HasPrefix(results[i], []byte("hypot")))
 	}
+
+	err = r.Iterate([]byte("hypot"), func(key []byte, value interface{}) error {
+		return errors.New("hello")
+	})
+
+	assert.NotNil(t, err)
 }
 
 func TestConcurrentInsert(t *testing.T) {
