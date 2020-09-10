@@ -1,7 +1,7 @@
 package rad
 
 // Iterate over every key from a given point
-func (r *Radix) Iterate(from []byte, fn func(key []byte, value interface{}) error) error {
+func (r *Radix) Iterate(from []byte, fn func(key []byte, value Comparable) error) error {
 	var node *Node
 
 	if len(from) > 0 {
@@ -13,7 +13,7 @@ func (r *Radix) Iterate(from []byte, fn func(key []byte, value interface{}) erro
 	return r.iterate(from, node, fn)
 }
 
-func (r *Radix) iterate(key []byte, node *Node, fn func(key []byte, value interface{}) error) error {
+func (r *Radix) iterate(key []byte, node *Node, fn func(key []byte, value Comparable) error) error {
 	if node.edges == nil {
 		return nil
 	}
