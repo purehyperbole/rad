@@ -11,7 +11,7 @@ import (
 type Node struct {
 	edges  *unsafe.Pointer
 	prefix []byte
-	value  interface{}
+	value  Comparable
 }
 
 func (n *Node) next(b byte) *Node {

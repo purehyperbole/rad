@@ -39,6 +39,10 @@ A successful insert will return true.
 
 If the operation conflicts with an insert from another thread, it will return false.
 
+Values must implement the `Comparable` interface to facilitate comparing one value to another.
+
+There are some default implementations for `[]byte` and `string`. Please see the documentation for usage.
+
 ```go
 if r.Insert([]byte("key"), &Thing{12345}) {
     fmt.Println("success!")
