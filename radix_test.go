@@ -241,6 +241,11 @@ func TestSwap(t *testing.T) {
 		success := r.Swap(uuids[x], Bytes(uuids[x]), Bytes(v))
 		require.True(t, success)
 	}
+
+	// test swapping a value that has been inserted, but its value is nil
+	r.Insert([]byte("hello"), nil)
+	success := r.Swap([]byte("hello"), nil, String("HELLO"))
+	require.True(t, success)
 }
 
 func TestConcurrentSwap(t *testing.T) {

@@ -63,7 +63,9 @@ func (r *Radix) Swap(key []byte, old, new Comparable) bool {
 
 	// if we didnt find a node and the old value is not empty, fail
 	if shouldUpdate(key, node, parent, pos, dv) && old == nil {
-		return false
+		if node.value != nil {
+			return false
+		}
 	}
 
 	// if we did find a node, check that the value we have matches or fail
