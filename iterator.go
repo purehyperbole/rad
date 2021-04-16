@@ -6,6 +6,9 @@ func (r *Radix) Iterate(from []byte, fn func(key []byte, value Comparable) error
 
 	if len(from) > 0 {
 		_, node, _, _ = r.find(from)
+		if node == nil {
+			return nil
+		}
 	} else {
 		node = r.root
 	}

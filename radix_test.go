@@ -143,6 +143,12 @@ func TestIterate(t *testing.T) {
 	})
 
 	assert.NotNil(t, err)
+
+	err = r.Iterate([]byte("does-not-exist"), func(key []byte, value Comparable) error {
+		return nil
+	})
+
+	assert.Nil(t, err)
 }
 
 func TestConcurrentInsert(t *testing.T) {
@@ -304,6 +310,49 @@ func TestConcurrentSwap(t *testing.T) {
 
 		assert.Equal(t, int64(w-1), failures)
 	}
+}
+
+func BenchmarkConcurrentInsert(b *testing.B) {
+	ids := make([][]byte, 1000000)
+
+	for i := 0; i < 1000000; i++ {
+		ids[i] = []byte(uuid.New().String())
+	}
+
+	r := New()
+
+	b.ResetTimer()
+
+	var counter int64
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			i := atomic.AddInt64(&counter, 1) - 1
+			r.Insert(ids[i], Bytes{})
+		}
+	})
+}
+
+func BenchmarkConcurrentLookup(b *testing.B) {
+	ids := make([][]byte, 1000000)
+
+	r := New()
+
+	for i := 0; i < 1000000; i++ {
+		ids[i] = []byte(uuid.New().String())
+		r.Insert(ids[i], Bytes{})
+	}
+
+	b.ResetTimer()
+
+	var counter int64
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			i := atomic.AddInt64(&counter, 1) - 1
+			r.Lookup(ids[i])
+		}
+	})
 }
 
 func b(char string) byte {
