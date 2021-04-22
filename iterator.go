@@ -3,11 +3,16 @@ package rad
 // Iterate over every key from a given point
 func (r *Radix) Iterate(from []byte, fn func(key []byte, value Comparable) error) error {
 	var node *Node
+	var pos, dv int
 
 	if len(from) > 0 {
-		_, node, _, _ = r.find(from)
+		_, node, pos, dv = r.find(from)
 		if node == nil {
 			return nil
+		}
+
+		if node.leaf() && pos+dv == len(from) {
+			return fn(append(from[:pos], node.prefix...), node.value)
 		}
 	} else {
 		node = r.root

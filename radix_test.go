@@ -149,6 +149,19 @@ func TestIterate(t *testing.T) {
 	})
 
 	assert.Nil(t, err)
+
+	r = New()
+
+	var found []byte
+
+	r.Insert([]byte("hello"), String("test"))
+
+	r.Iterate([]byte("hel"), func(key []byte, value Comparable) error {
+		found = key
+		return nil
+	})
+
+	assert.Equal(t, "hello", string(found))
 }
 
 func TestConcurrentInsert(t *testing.T) {

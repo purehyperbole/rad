@@ -9,9 +9,10 @@ import (
 
 // Node stores all leaf data
 type Node struct {
-	edges  *unsafe.Pointer
-	prefix []byte
-	value  Comparable
+	edges    *unsafe.Pointer
+	prefix   []byte
+	value    Comparable
+	children int32
 }
 
 func (n *Node) next(b byte) *Node {
@@ -31,6 +32,8 @@ func (n *Node) setNext(b byte, node *Node) {
 		n.edges = upptr(unsafe.Pointer(edges))
 	}
 
+	n.children++
+
 	edges[b] = unsafe.Pointer(node)
 }
 
@@ -43,7 +46,13 @@ func (n *Node) swapNext(b byte, existing, next *Node) bool {
 
 	old := unsafe.Pointer(existing)
 	new := unsafe.Pointer(next)
-	return atomic.CompareAndSwapPointer(&edges[b], old, new)
+	success := atomic.CompareAndSwapPointer(&edges[b], old, new)
+
+	if success {
+		atomic.AddInt32(&n.children, 1)
+	}
+
+	return success
 }
 
 func (n *Node) setupEdges() *[256]unsafe.Pointer {
@@ -58,6 +67,10 @@ func (n *Node) setupEdges() *[256]unsafe.Pointer {
 	}
 
 	return (*[256]unsafe.Pointer)(atomic.LoadPointer(n.edges))
+}
+
+func (n *Node) leaf() bool {
+	return atomic.LoadInt32(&n.children) < 1
 }
 
 func (n *Node) print() {
