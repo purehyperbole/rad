@@ -9,9 +9,9 @@ import (
 
 // Node stores all leaf data
 type Node struct {
-	edges    *unsafe.Pointer
 	prefix   []byte
 	value    Comparable
+	edges    *unsafe.Pointer
 	children int32
 }
 

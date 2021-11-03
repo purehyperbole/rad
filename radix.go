@@ -2,6 +2,7 @@ package rad
 
 import (
 	"unsafe"
+	"runtime"
 )
 
 // Radix tree
@@ -46,12 +47,15 @@ func (r *Radix) Insert(key []byte, value Comparable) bool {
 			// someone else updated the same value we did
 			return false
 		}
+
+		runtime.Gosched()
 	}
 }
 
 // MustInsert attempts to insert a value until it is successful
 func (r *Radix) MustInsert(key []byte, value Comparable) {
 	for !r.Insert(key, value) {
+		runtime.Gosched()
 	}
 }
 
